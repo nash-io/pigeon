@@ -1,7 +1,7 @@
 defmodule Pigeon.FCM.Config do
   @moduledoc false
 
-  defstruct token_fetcher: nil,
+  defstruct auth: nil,
             project_id: nil,
             uri: "fcm.googleapis.com",
             port: 443
@@ -11,10 +11,10 @@ defmodule Pigeon.FCM.Config do
 
   This is passed directly to `Goth.fetch!/1`.
   """
-  @type token_fetcher :: module() | term()
+  @type auth :: module() | term()
 
   @type t :: %__MODULE__{
-          token_fetcher: nil | token_fetcher(),
+          auth: nil | auth(),
           project_id: nil | String.t(),
           uri: String.t(),
           port: pos_integer()
@@ -26,24 +26,24 @@ defmodule Pigeon.FCM.Config do
   ## Examples
 
       iex> Pigeon.FCM.Config.new(
-      ...>   project_id: "example-project",
-      ...>   token_fetcher: YourApp.Goth
+      ...>   auth: YourApp.Goth,
+      ...>   project_id: "example-project"
       ...> )
       %Pigeon.FCM.Config{
+        auth: YourApp.Goth,
         port: 443,
         project_id: "example-project",
-        token_fetcher: YourApp.Goth,
-        uri: "fcm.googleapis.com"
+        uri: ~c"fcm.googleapis.com"
       }
   """
   def new(opts) do
     opts = Map.new(opts)
 
     %__MODULE__{
-      token_fetcher: opts[:token_fetcher],
+      auth: opts[:auth],
+      port: Map.get(opts, :port, 443),
       project_id: opts[:project_id],
-      uri: Map.get(opts, :uri, "fcm.googleapis.com"),
-      port: Map.get(opts, :port, 443)
+      uri: Map.get(opts, :uri, ~c"fcm.googleapis.com")
     }
   end
 end
@@ -80,7 +80,7 @@ defimpl Pigeon.Configurable, for: Pigeon.FCM.Config do
   def add_port(opts, %@for{port: port}), do: [{:port, port} | opts]
 
   def push_headers(config, _notification, _opts) do
-    token = Goth.fetch!(config.token_fetcher)
+    token = Goth.fetch!(config.auth)
 
     [
       {":method", "POST"},
@@ -124,9 +124,9 @@ defimpl Pigeon.Configurable, for: Pigeon.FCM.Config do
     |> Enum.each(&do_validate!(&1, config))
   end
 
-  defp do_validate!({:token_fetcher, mod}, config) when not is_atom(mod) or is_nil(mod) do
+  defp do_validate!({:auth, mod}, config) when not is_atom(mod) or is_nil(mod) do
     raise Pigeon.ConfigError,
-      reason: "attempted to start without valid :token_fetcher module",
+      reason: "attempted to start without valid :auth module",
       config: redact(config)
   end
 
