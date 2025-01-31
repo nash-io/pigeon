@@ -28,6 +28,8 @@ defmodule Pigeon.FCM.Error do
   defp parse_response("INTERNAL"), do: :internal
   defp parse_response("THIRD_PARTY_AUTH_ERROR"), do: :third_party_auth_error
 
+  defp parse_response("PERMISSION_DENIED"), do: :permission_denied
+
   defp parse_response(unknown_error) do
     Logger.error("Unknown FCM error #{inspect(unknown_error)}")
     :unknown_error
