@@ -7,17 +7,16 @@ defmodule Pigeon.FCM.Error do
 
   @doc false
   @spec parse(map) :: Notification.error_response()
-  def parse(%{"details" => [%{"errorCode" => error_code}]}) when is_binary(error_code) do
-    parse_response(error_code)
-  end
+  def parse(%{"details" => details} = error), do: parse_details(details, error)
+  def parse(error), do: parse_status(error)
 
-  def parse(%{"status" => status}) when is_binary(status) do
-    parse_response(status)
-  end
+  defp parse_details([%{"errorCode" => error_code} | _], _), do: parse_response(error_code)
 
-  def parse(unknown_error) do
-    parse_response(unknown_error)
-  end
+  defp parse_details([_ | tail], error), do: parse_details(tail, error)
+  defp parse_details([], error), do: parse_status(error)
+
+  defp parse_status(%{"status" => status}), do: parse_response(status)
+  defp parse_status(_), do: :unknown_error
 
   defp parse_response("INTERNAL"), do: :internal
   defp parse_response("INVALID_ARGUMENT"), do: :invalid_argument
