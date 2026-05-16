@@ -1,6 +1,6 @@
 defmodule Pigeon do
   @moduledoc """
-  HTTP2-compliant wrapper for sending iOS and Android push notifications.
+  iOS (APNS), Android (FCM), and Amazon Android (ADM) push notifications for Elixir.
 
   ## Getting Started
 
@@ -9,7 +9,6 @@ defmodule Pigeon do
     - `Pigeon.ADM` - Amazon Android.
     - `Pigeon.APNS` - Apple iOS.
     - `Pigeon.FCM` - Firebase Cloud Messaging v1 API.
-    - `Pigeon.LegacyFCM` - Firebase Cloud Messaging Legacy API.
 
   ## Creating Dynamic Runtime Dispatchers
 
@@ -67,36 +66,39 @@ defmodule Pigeon do
   - `:timeout` - Push timeout. Defaults to 5000ms.
   """
   @type push_opts :: [
-          on_response: on_response | nil,
-          timeout: non_neg_integer
+          on_response: on_response() | nil,
+          timeout: non_neg_integer()
         ]
 
   @doc """
   Returns the configured default pool size for Pigeon dispatchers.
+
   To customize this value, include the following in your config/config.exs:
 
       config :pigeon, :default_pool_size, 5
   """
-  @spec default_pool_size :: pos_integer
+  @spec default_pool_size :: pos_integer()
   def default_pool_size() do
     Application.get_env(:pigeon, :default_pool_size, 5)
   end
 
   @doc """
   Returns the configured JSON encoding library for Pigeon.
+
   To customize the JSON library, include the following in your config/config.exs:
 
       config :pigeon, :json_library, Jason
   """
-  @spec json_library :: module
+  @spec json_library :: module()
   def json_library do
     Application.get_env(:pigeon, :json_library, Jason)
   end
 
-  @spec push(pid | atom, notification :: notification, push_opts) ::
-          notification :: struct | no_return
-  @spec push(pid | atom, notifications :: [notification, ...], push_opts) ::
-          notifications :: [struct, ...] | no_return
+  @spec push(pid() | atom(), notification() | [notification()], push_opts()) ::
+          notification() | [notification()] | :ok | [:ok]
+  @doc """
+  Sends a push notification with given options.
+  """
   def push(pid, notifications, opts \\ [])
 
   def push(pid, notifications, opts) when is_list(notifications) do

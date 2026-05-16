@@ -12,8 +12,8 @@ defmodule Pigeon.Dispatcher do
   # FCM as an example, but use the relevant options for your push type.
   opts = [
     adapter: Pigeon.FCM,
-    project_id: "example-project-123",
-    service_account_json: File.read!("service-account.json")
+    auth: YourApp.Goth,
+    project_id: "example-project-123"
   ]
 
   {:ok, pid} = Pigeon.Dispatcher.start_link(opts)
@@ -33,6 +33,7 @@ defmodule Pigeon.Dispatcher do
     @doc false
     def start(_type, _args) do
       children = [
+        {Goth, name: YourApp.Goth},
         YourApp.Repo,
         {Registry, keys: :unique, name: Registry.YourApp}
       ] ++ push_workers()
@@ -60,9 +61,9 @@ defmodule Pigeon.Dispatcher do
     defp push_spec(%{type: "fcm"} = config) do
       {Pigeon.Dispatcher, [
         adapter: Pigeon.FCM,
+        auth: String.to_existing_atom(config.auth),
         name: {:via, Registry, {Registry.YourApp, config.name}},
-        project_id: config.project_id,
-        service_account_json: config.service_account_json
+        project_id: config.project_id
       ]}
     end
   end
